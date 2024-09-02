@@ -1,0 +1,15 @@
+env: "dev"
+
+server:
+
+  grpc:
+    host: "localhost"
+    port: 50051
+    timeout: 5s
+
+  http:
+    host: "localhost"
+    port: 8080
+
+database:
+  dsn: "host=db user=admin password=admin dbname=new_db port=5432 sslmode=disable TimeZone=Europe/Moscow"
