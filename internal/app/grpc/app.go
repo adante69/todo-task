@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"net"
 	tmsgrpc "todo-task/internal/grpc/taskManager"
+	"todo-task/internal/services/taskManager"
 )
 
 type App struct {
@@ -14,7 +15,7 @@ type App struct {
 	port       int
 }
 
-func New(log *slog.Logger, tms tmsgrpc.TaskManager, port int) *App {
+func New(log *slog.Logger, tms *taskManager.TaskManager, port int) *App {
 	gRPCServer := grpc.NewServer()
 	tmsgrpc.Register(gRPCServer, tms)
 	return &App{

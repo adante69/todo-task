@@ -6,7 +6,8 @@ CREATE TABLE IF NOT EXISTS tasks
     name  TEXT NOT NULL ,
     description  TEXT,
     deadline   TIMESTAMP,
-    priority   INT
+    priority   INT,
+    end_status BOOLEAN
 );
 
 CREATE TABLE IF NOT EXISTS comments

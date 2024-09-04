@@ -3,6 +3,8 @@ package main
 import (
 	"log/slog"
 	"os"
+	"os/signal"
+	"todo-task/internal/app"
 	"todo-task/internal/config"
 )
 
@@ -18,6 +20,16 @@ func main() {
 	log := setupLogger(cfg.Env)
 
 	log.Info("starting server")
+
+	application := app.New(log, cfg.Server.GRPC.Port, cfg.Database.Dsn)
+	go application.GRPCServer.MustRun()
+
+	stop := make(chan os.Signal, 1)
+	signal.Notify(stop, os.Interrupt)
+
+	sign := <-stop
+	application.GRPCServer.Stop()
+	log.Info("shutting down server", slog.String("reason", sign.String()))
 
 }
 

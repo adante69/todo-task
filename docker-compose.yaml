@@ -1,0 +1,28 @@
+services:
+  app:
+    build: .
+    depends_on:
+      - db
+    environment:
+      - CONFIG_PATH=./config/config.yaml
+
+  db:
+    container_name: postgres_tms
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_PASSWORD: admin
+      POSTGRES_USER: admin
+      POSTGRES_DB: new_db2
+    ports:
+      - "5432:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+  migrations:
+    build: .
+    depends_on:
+      - db
+    command: ./migrator -migrate
+
+
+volumes:
+  db_data:

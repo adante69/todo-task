@@ -13,14 +13,15 @@ type Storage struct {
 	db *sql.DB
 }
 
-func (s *Storage) Task(ctx context.Context, taskID int) (task models.Task, err error) {
+func (s *Storage) Task(ctx context.Context, taskID uint64) (task models.Task, err error) {
 	const op = "storage.postgres.Task"
 
-	query := `SELECT id, name, description, deadline, priority, comment FROM tasks WHERE id = $1`
+	query := `SELECT id, name, description, deadline, priority, end_status FROM tasks WHERE id = $1`
 
 	row := s.db.QueryRowContext(ctx, query, taskID)
 
-	err = row.Scan(&task.ID, &task.Name, &task.Desc, &task.Deadline, &task.Priority, &task.Comment)
+	err = row.Scan(&task.ID, &task.Name, &task.Desc, &task.Deadline, &task.Priority, &task.End_status)
+
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return models.Task{}, fmt.Errorf("%s %w", op, err)
@@ -34,14 +35,39 @@ func (s *Storage) Task(ctx context.Context, taskID int) (task models.Task, err e
 func (s *Storage) CreateTask(ctx context.Context,
 	name, description, deadline, priority string) (id uint64, err error) {
 	const op = "storage.postgres.CreateTask"
+	status := false
 
-	query := `INSERT INTO tasks (name, description, deadline, priority) VALUES ($1, $2, $3, $4) RETURNING id`
+	query := `INSERT INTO tasks (name, description, deadline, priority, end_status) VALUES ($1, $2, $3, $4, $5) RETURNING id`
 
-	err = s.db.QueryRowContext(ctx, query, name, description, deadline, priority).Scan(&id)
+	err = s.db.QueryRowContext(ctx, query, name, description, deadline, priority, status).Scan(&id)
 	if err != nil {
 		return id, fmt.Errorf("%s %w", op, err)
 	}
 	return id, nil
+}
+
+func (s *Storage) Processing(ctx context.Context, id uint64) (bool, error) {
+	const op = "storage.postgres.Process"
+
+	query1 := `SELECT end_status FROM tasks WHERE id = $1`
+
+	var status bool
+	err := s.db.QueryRowContext(ctx, query1, id).Scan(&status)
+	if err != nil {
+		return false, fmt.Errorf("%s %w", op, err)
+	}
+
+	query := `
+		UPDATE tasks
+		SET end_status = $2
+		WHERE id = $1
+	`
+	_, err = s.db.ExecContext(ctx, query, id, !status)
+	if err != nil {
+		return false, fmt.Errorf("%s %w", op, err)
+	}
+
+	return true, nil
 }
 
 func (s *Storage) UpdateTask(ctx context.Context, task models.Task) error {
@@ -76,19 +102,19 @@ func New(source string) (*Storage, error) {
 	return &Storage{db: db}, nil
 }
 
-func (s *Storage) AddComment(ctx context.Context, id int, comment string) error {
+func (s *Storage) AddComment(ctx context.Context, id uint64, comment string) (bool, error) {
 	const op = "storage.postgres.AddComment"
 
 	query := `INSERT INTO comments (id, comment) VALUES ($1, $2)`
 
 	_, err := s.db.ExecContext(ctx, query, id, comment)
 	if err != nil {
-		return fmt.Errorf("%s %w", op, err)
+		return false, fmt.Errorf("%s %w", op, err)
 	}
-	return nil
+	return true, nil
 }
 
-func (s *Storage) RemoveComment(ctx context.Context, id int, comment string) error {
+func (s *Storage) RemoveComment(ctx context.Context, id uint64) error {
 	const op = "storage.postgres.RemoveComment"
 	query := `DELETE FROM comments WHERE id = $1`
 	_, err := s.db.ExecContext(ctx, query, id)
@@ -98,12 +124,12 @@ func (s *Storage) RemoveComment(ctx context.Context, id int, comment string) err
 	return nil
 }
 
-func (s *Storage) RemoveTask(ctx context.Context, id int) error {
+func (s *Storage) RemoveTask(ctx context.Context, id uint64) (bool, error) {
 	const op = "storage.postgres.RemoveTask"
 	query := `DELETE FROM tasks WHERE id = $1`
 	_, err := s.db.ExecContext(ctx, query, id)
 	if err != nil {
-		return fmt.Errorf("%s %w", op, err)
+		return false, fmt.Errorf("%s %w", op, err)
 	}
-	return nil
+	return true, nil
 }

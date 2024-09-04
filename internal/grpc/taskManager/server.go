@@ -6,6 +6,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"todo-task/internal/domain/models"
 )
 
 type TaskManager interface {
@@ -16,15 +17,14 @@ type TaskManager interface {
 		deadline string,
 		priority string,
 	) (taskId uint64, err error)
-	Process(
+	Processing(
 		ctx context.Context,
 		taskId uint64,
-		status bool,
 	) (answer bool, err error)
 	Get(
 		ctx context.Context,
 		taskId uint64,
-	) (name, description, deadline, priority, comment string, err error)
+	) (task models.Task, err error)
 	AddComment(
 		ctx context.Context,
 		taskId uint64,
@@ -64,7 +64,7 @@ func (s *serverAPI) Create(
 	}, nil
 }
 
-func (s *serverAPI) Process(
+func (s *serverAPI) Processing(
 	ctx context.Context,
 	req *tmsv1.ProcessingRequest,
 ) (*tmsv1.ProcessingResponse, error) {
@@ -73,7 +73,7 @@ func (s *serverAPI) Process(
 		return nil, status.Error(codes.InvalidArgument, "invalid task id")
 	}
 
-	answer, err := s.taskManager.Process(ctx, req.TaskId, req.GetStage())
+	answer, err := s.taskManager.Processing(ctx, req.TaskId)
 
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, "failed to process task")
@@ -92,18 +92,31 @@ func (s *serverAPI) Get(
 		return nil, status.Error(codes.InvalidArgument, "invalid task id")
 	}
 
-	name, description, deadline, priority, comment, err := s.taskManager.Get(ctx, req.TaskId)
+	task, err := s.taskManager.Get(ctx, req.TaskId)
 
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, "failed to get task")
 	}
+	var priority string
+	switch task.Priority {
+	case 1:
+		priority = "important"
+	case 2:
+		priority = "non-important"
+	case 3:
+		priority = "critical"
+	case 4:
+		priority = "can be delayed"
+	default:
+		priority = "unknown"
+
+	}
 
 	return &tmsv1.GetResponse{
-		Name:        name,
-		Description: description,
-		Deadline:    deadline,
+		Name:        task.Name,
+		Description: task.Desc,
+		Deadline:    task.Deadline.String(),
 		Priority:    priority,
-		Comment:     comment,
 	}, nil
 }
 
