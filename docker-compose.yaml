@@ -2,11 +2,9 @@ services:
   app:
     build: .
     depends_on:
-      - db
-    environment:
-      - CONFIG_PATH=./config/config.yaml
+      - db-tasks
 
-  db:
+  db-tasks:
     container_name: postgres_tms
     image: postgres:16-alpine
     environment:
@@ -20,7 +18,7 @@ services:
   migrations:
     build: .
     depends_on:
-      - db
+      - db-tasks
     command: ./migrator -migrate
 
 

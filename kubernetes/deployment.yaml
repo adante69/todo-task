@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: todo-task-deployment
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: todo-task
+  template:
+    metadata:
+      labels:
+        app: todo-task
+    spec:
+      containers:
+        - name: todo-task-app
+          image: daniiarsherniiazov22/todo-tms-app-1:latest
+          ports:
+            - containerPort: 50052 # Порт для gRPC

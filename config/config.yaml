@@ -4,7 +4,7 @@ server:
 
   grpc:
     host: "localhost"
-    port: 50051
+    port: 50052
     timeout: 5s
 
   http:
@@ -12,4 +12,4 @@ server:
     port: 8080
 
 database:
-  dsn: "host=db user=admin password=admin dbname=new_db2 port=5432 sslmode=disable TimeZone=Europe/Moscow"
+  dsn: "host=db-tasks user=admin password=admin dbname=new_db2 port=5432 sslmode=disable TimeZone=Europe/Moscow"
