@@ -12,7 +12,16 @@ type Config struct {
 	Env      string         `yaml:"env" env-default:"dev"`
 	Server   ServerConfig   `yaml:"server" env-required:"true"`
 	Database DatabaseConfig `yaml:"database" env-required:"true"`
+	Redis    RedisConfig    `yaml:"redis" env-required:"true"`
 }
+
+type RedisConfig struct {
+	Host     string `yaml:"host" env-required:"true"`
+	Port     string `yaml:"port" env-required:"true"`
+	Password string `yaml:"password" env-required:"true"`
+	DB       int    `yaml:"db" env-required:"true"`
+}
+
 type ServerConfig struct {
 	GRPC GRPCConfig `yaml:"grpc"`
 	HTTP HTTPConfig `yaml:"http"`

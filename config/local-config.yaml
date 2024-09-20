@@ -1,4 +1,4 @@
-env: "dev"
+env: "local"
 
 server:
 
@@ -12,11 +12,11 @@ server:
     port: 8080
 
 database:
-  dsn: "host=db-tasks user=admin password=admin dbname=new_db2 port=5432 sslmode=disable TimeZone=Europe/Moscow"
+  dsn: "host=localhost user=admin password=admin dbname=new_db2 port=5432 sslmode=disable TimeZone=Europe/Moscow"
 
 
 redis:
-  host: "redis-tasks"
+  host: "localhost"
   port: 6379
   password: ""  # If no password is set, leave this empty
   db: 0         # Select the Redis database (default is 0)
